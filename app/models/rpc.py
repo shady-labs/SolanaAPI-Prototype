@@ -8,7 +8,7 @@ class BlockResponse(BaseModel):
     blockhash: str = Field(..., description="Block hash")
     previous_blockhash: str = Field(..., description="Previous block hash")
     parent_slot: int = Field(..., description="Parent slot number")
-    transactions: List[dict] = Field(default_list(), description="List of transactions")
+    transactions: List[dict] = Field(default=[], description="List of transactions")
 
 class SignatureResponse(BaseModel):
     signature: str = Field(..., description="Transaction signature")
