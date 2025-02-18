@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from solders.pubkey import Pubkey
 from solana.rpc.api import Client
 from config import RPC_URL
@@ -54,6 +54,9 @@ from app.nfts.solana_rpc.rpc_services import (
     get_vote_accounts_service,
 )
 from app.models.transaction import SendTransactionRequest, TransactionResponse, ErrorResponse
+from app.models.nft import NFTMetadataResponse
+from app.models.account import AccountInfoResponse
+from app.models.rpc import BalanceResponse, BlockResponse, SignatureResponse
 
 # Create separate routers for GET and POST requests
 get_router = APIRouter()
@@ -85,7 +88,11 @@ async def get_assets_by_collection_api(collection_address: str):
 async def get_assets_by_group_api(group_key: str, group_value: str):
     return await get_assets_by_group_service(group_key, group_value)
 
-@get_router.get("/{mint_address}/getNFTMetadata")
+@get_router.get(
+    "/{mint_address}/getNFTMetadata",
+    response_model=NFTMetadataResponse,
+    responses={400: {"model": ErrorResponse}}
+)
 async def get_nft_metadata(mint_address: str):
     """Fetch NFT metadata from Solana and its off-chain URI."""
     try:
@@ -109,47 +116,68 @@ async def get_nft_metadata(mint_address: str):
         # Fetch account info
         response = client.get_account_info(metadata_pda)
         if not response or not response.value or not response.value.data:
-            return {"error": "Metadata account not found"}
+            raise HTTPException(status_code=400, detail="Metadata account not found")
 
         # Parse metadata
         metadata = await get_nft_metadata(response.value.data)
         if "error" in metadata:
-            return metadata
+            raise HTTPException(status_code=400, detail=metadata["error"])
 
-        # Fetch full metadata from URI
+        # Parse metadata and return as NFTMetadataResponse
         if "uri" in metadata:
             off_chain_data = fetch_off_chain_metadata(metadata["uri"])
             metadata["off_chain"] = off_chain_data
-            return metadata
+            return NFTMetadataResponse(**metadata)
             
-        return {"error": "Invalid metadata format"}
+        raise HTTPException(status_code=400, detail="Invalid metadata format")
 
     except Exception as e:
-        return {"error": f"Failed to fetch metadata: {str(e)}"}
+        raise HTTPException(status_code=400, detail=str(e))
 
-@get_router.get("/getAccountInfo")
+@get_router.get(
+    "/rpc/getAccountInfo",
+    response_model=AccountInfoResponse,
+    responses={400: {"model": ErrorResponse}}
+)
 async def get_account_info_api(account_address: str):
     """Get account information for the specified account address."""
     try:
-        return await get_account_info_service(account_address)
+        response = await get_account_info_service(account_address)
+        if "error" in response:
+            raise HTTPException(status_code=400, detail=response["error"])
+        return AccountInfoResponse(**response)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=400, detail=str(e))
 
-@get_router.get("/rpc/getBalance")
+@get_router.get(
+    "/rpc/getBalance",
+    response_model=BalanceResponse,
+    responses={400: {"model": ErrorResponse}}
+)
 async def get_balance_api(account_address: str):
     """Get balance for the specified account address."""
     try:
-        return await get_balance_service(account_address)
+        response = await get_balance_service(account_address)
+        if "error" in response:
+            raise HTTPException(status_code=400, detail=response["error"])
+        return BalanceResponse(**response)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=400, detail=str(e))
 
-@get_router.get("/rpc/getBlock")
+@get_router.get(
+    "/rpc/getBlock",
+    response_model=BlockResponse,
+    responses={400: {"model": ErrorResponse}}
+)
 async def get_block_api(slot: int):
     """Get block information for the specified slot."""
     try:
-        return await get_block_service(slot)
+        response = await get_block_service(slot)
+        if "error" in response:
+            raise HTTPException(status_code=400, detail=response["error"])
+        return BlockResponse(**response)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=400, detail=str(e))
 
 @get_router.get("/rpc/getBlockHeight")
 async def get_block_height_api():
