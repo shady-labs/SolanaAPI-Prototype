@@ -11,11 +11,3 @@ async def get_token_accounts(wallet_address: str):
     )
     await client.close()
     return response["result"]["value"]
-
-async def get_metadata_from_mint(mint_address: str):
-    client = AsyncClient(RPC_URL)
-    response = await client.get_account_info(Pubkey(mint_address))
-    await client.close()
-    return response["result"]["value"]
-
-
