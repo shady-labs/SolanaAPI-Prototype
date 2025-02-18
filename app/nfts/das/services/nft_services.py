@@ -1,5 +1,6 @@
+from fastapi import HTTPException
 from app.nfts.solana_rpc.accounts import get_token_accounts
-from app.nfts.solana_rpc.nft import get_nft_data
+from app.nfts.solana_rpc.nft import get_nft_data, get_nft_metadata
 from app.nfts.solana_rpc.proof import get_nft_proof
 
 async def is_nft(asset):
@@ -33,3 +34,11 @@ async def get_assets_by_collection_service(collection_address: str):
 async def get_assets_by_group_service(group_key: str, group_value: str):
     token_accounts = await get_token_accounts(group_value)
     return [token for token in token_accounts if group_key in token]
+
+async def get_nft_metadata(mint_address: str):
+    metadata = await get_nft_metadata(mint_address)
+    
+    if "error" in metadata:
+        raise HTTPException(status_code=400, detail=metadata["error"])
+    
+    return metadata
