@@ -1,8 +1,7 @@
 from solana.rpc.async_api import AsyncClient
 from solders.pubkey import Pubkey
 import base64
-
-RPC_URL = "https://api.mainnet-beta.solana.com"
+from config import RPC_URL
 
 async def get_nft_data(mint_address: str):
     client = AsyncClient(RPC_URL)
