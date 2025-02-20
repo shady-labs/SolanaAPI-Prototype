@@ -1,5 +1,12 @@
 from fastapi import APIRouter
 from app.models.token import TokenAccountBalance, TokenAccount, TokenSupply
+from app.tokens.services.token_services import (
+    get_all_tokens,
+    get_token,
+    get_token_balance,
+    get_tokens_by_owner_service,
+    get_token_supply_info
+)
 from app.tokens.solana_rpc.rpc_services import (
     get_token_account_balance_service,
     get_token_accounts_by_owner_service,
@@ -12,6 +19,23 @@ from app.tokens.solana_rpc.rpc_services import (
 get_router = APIRouter()
 post_router = APIRouter()
 
+# High-level token endpoints
+@get_router.get("/getAllTokens")
+async def get_tokens_api(wallet_address: str):
+    """Get all tokens for a wallet."""
+    return await get_all_tokens(wallet_address)
+
+@get_router.get("/getToken")
+async def get_token_api(mint_address: str):
+    """Get token data and metadata."""
+    return await get_token(mint_address)
+
+@get_router.get("/getTokenBalance")
+async def get_token_balance_api(wallet_address: str, mint_address: str):
+    """Get token balance for a specific token."""
+    return await get_token_balance(wallet_address, mint_address)
+
+# RPC endpoints
 @get_router.get("/getTokenAccountBalance", response_model=TokenAccountBalance)
 async def get_token_account_balance(account: str):
     """Get token account balance."""

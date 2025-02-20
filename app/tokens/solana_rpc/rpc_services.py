@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from .rpc_client import TokenRPCClient
+from .token import get_token_data, get_token_metadata
 
 async def get_token_account_balance_service(account: str):
     client = TokenRPCClient()
